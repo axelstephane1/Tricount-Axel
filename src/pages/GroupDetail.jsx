@@ -69,6 +69,12 @@ export default function GroupDetail() {
     fetchExpenses()
   }
 
+  function shareGroup() {
+  const url = `${window.location.origin}/join/${id}`
+  navigator.clipboard.writeText(url)
+  alert('Lien copié ! 🎉')
+}
+
   function toggleParticipant(mid) {
     setParticipants(prev =>
       prev.includes(mid) ? prev.filter(p => p !== mid) : [...prev, mid]
@@ -84,9 +90,17 @@ export default function GroupDetail() {
         <button onClick={() => navigate('/')} className="text-violet-200 mb-4 flex items-center gap-1">
           ← Retour
         </button>
+        
         <h1 className="text-2xl font-bold text-white">{group?.name}</h1>
         <p className="text-violet-200 mt-1">Total : {total}€</p>
       </div>
+
+<button
+  onClick={shareGroup}
+  className="w-full bg-white/20 text-white py-3 rounded-2xl font-medium flex items-center justify-center gap-2 mt-2"
+>
+  🔗 Inviter des amis
+</button>
 
       {/* Contenu */}
       <div className="bg-gray-50 min-h-screen rounded-t-3xl p-6">

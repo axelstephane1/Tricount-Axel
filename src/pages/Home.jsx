@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 
-export default function Home() {
+export default function Home({ user }) {
   const [groups, setGroups] = useState([])
   const [newName, setNewName] = useState('')
   const navigate = useNavigate()
@@ -10,13 +10,26 @@ export default function Home() {
   useEffect(() => { fetchGroups() }, [])
 
   async function fetchGroups() {
-    const { data } = await supabase.from('groups').select('*')
-    setGroups(data || [])
+    const { data } = await supabase
+      .from('group_members_auth')
+      .select('group_id, groups(*)')
+      .eq('user_id', user.id)
+    setGroups(data?.map(d => d.groups) || [])
   }
 
   async function createGroup() {
     if (!newName.trim()) return
-    await supabase.from('groups').insert({ name: newName })
+    const { data } = await supabase
+      .from('groups')
+      .insert({ name: newName, owner_id: user.id })
+      .select()
+      .single()
+
+    await supabase.from('group_members_auth').insert({
+      group_id: data.id,
+      user_id: user.id
+    })
+
     setNewName('')
     fetchGroups()
   }
@@ -26,11 +39,21 @@ export default function Home() {
     fetchGroups()
   }
 
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    navigate('/login')
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-500 to-indigo-600 p-6">
       <div className="max-w-md mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-2">SplitEasy 💸</h1>
-        <p className="text-violet-200 mb-8">Partagez vos dépenses facilement</p>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-3xl font-bold text-white">SplitEasy 💸</h1>
+          <button onClick={handleLogout} className="text-violet-200 text-sm">
+            Déconnexion
+          </button>
+        </div>
+        <p className="text-violet-200 mb-8">Bonjour {user.user_metadata?.name || user.email} 👋</p>
 
         <div className="flex gap-2 mb-6">
           <input
